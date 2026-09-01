@@ -1,0 +1,18 @@
+[project]
+name = "wrapfit"
+version = "0.1.0"
+description = "Check whether text can wrap to a given width without breaking a word"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "dtaylor69" }]
+
+[project.scripts]
+wrapfit = "wrapfit.cli:main"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["wrapfit*"]
