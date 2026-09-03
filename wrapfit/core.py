@@ -19,6 +19,7 @@ class Violation:
 class Report:
     width: int
     lenient: bool
+    tabsize: int = 8
     violations: List[Violation] = field(default_factory=list)
     wrapped_line_count: Optional[int] = None
 
@@ -28,22 +29,39 @@ class Report:
         return self.lenient or not self.violations
 
 
-def find_violations(text: str, width: int) -> List[Violation]:
+def _indent_width(line: str, tabsize: int) -> int:
+    """Column width of a line's leading whitespace, with tabs expanded to tabsize."""
+    stripped = line.lstrip(" \t")
+    indent = line[: len(line) - len(stripped)]
+    return len(indent.expandtabs(tabsize))
+
+
+def find_violations(text: str, width: int, *, tabsize: int = 8) -> List[Violation]:
     violations = []
     for line_no, line in enumerate(text.splitlines(), start=1):
+        # A tab-indented line has less room left for its content than the raw
+        # width suggests, since the indent itself eats columns once expanded.
+        budget = max(width - _indent_width(line, tabsize), 0)
         for word in line.split():
-            if len(word) > width:
+            if len(word) > budget:
                 violations.append(
-                    Violation(line=line_no, word=word, length=len(word), excess=len(word) - width)
+                    Violation(line=line_no, word=word, length=len(word), excess=len(word) - budget)
                 )
     return violations
 
 
-def check(text: str, width: int, *, lenient: bool = False) -> Report:
+def check(text: str, width: int, *, lenient: bool = False, tabsize: int = 8) -> Report:
     if width < 1:
         raise ValueError("width must be at least 1")
+    if tabsize < 1:
+        raise ValueError("tabsize must be at least 1")
 
-    report = Report(width=width, lenient=lenient, violations=find_violations(text, width))
+    report = Report(
+        width=width,
+        lenient=lenient,
+        tabsize=tabsize,
+        violations=find_violations(text, width, tabsize=tabsize),
+    )
 
     if lenient:
         # Mirror textwrap's own defaults so the reported line count matches what
@@ -51,7 +69,13 @@ def check(text: str, width: int, *, lenient: bool = False) -> Report:
         wrapped = []
         for paragraph in text.split("\n\n"):
             wrapped.extend(
-                textwrap.wrap(paragraph, width=width, break_long_words=True, break_on_hyphens=True)
+                textwrap.wrap(
+                    paragraph,
+                    width=width,
+                    break_long_words=True,
+                    break_on_hyphens=True,
+                    tabsize=tabsize,
+                )
             )
         report.wrapped_line_count = len(wrapped)
 

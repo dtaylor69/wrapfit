@@ -21,6 +21,12 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="allow long words to be broken instead of failing; report the resulting line count",
     )
+    parser.add_argument(
+        "--tabsize",
+        type=int,
+        default=8,
+        help="columns per tab stop, for lines indented with tabs (default: 8)",
+    )
     return parser
 
 
@@ -42,7 +48,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         return 2
 
     try:
-        report = check(text, args.width, lenient=args.lenient)
+        report = check(text, args.width, lenient=args.lenient, tabsize=args.tabsize)
     except ValueError as exc:
         print(f"wrapfit: {exc}", file=sys.stderr)
         return 2

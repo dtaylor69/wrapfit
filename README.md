@@ -54,6 +54,20 @@ bodies before they're written:
 
     $ git log -1 --format=%B | wrapfit --width 72
 
+Account for tab-indented input, such as a code comment:
+
+    $ printf '\t\t\tsee-the-attached-configuration-file.yaml\n' | wrapfit --width 40 --tabsize 4
+    line 1: too long — 'see-the-attached-configuration-file.yaml' is 40 columns, 12 over width
+
+    1 word(s) exceed 40 columns. Widen the column, shorten the word,
+    or pass --lenient to allow breaking it.
+
+The word itself is exactly 40 columns, but three tabs at a tab size
+of 4 already use 12 of those, leaving only 28 — so the reported
+excess is relative to what's actually left on the line, not the raw
+width. `--tabsize` defaults to 8, matching `textwrap` and most
+terminals.
+
 ## Exit codes
 
 - `0` — text fits, or `--lenient` was given so any long words were
@@ -67,9 +81,12 @@ bodies before they're written:
   broken tokens defeats the purpose of checking in the first place.
 - "Word" means a whitespace-delimited token in the input, matching
   how `textwrap` decides what counts as breakable.
+- A line's leading tabs count against its width budget once expanded,
+  so an indented word is checked against the columns actually left on
+  the line, not the full target width.
 - No third-party dependencies — standard library only.
 
 ## Status
 
-Early. The CLI and the two checks above (strict, lenient) are the
-whole tool right now.
+Early. The CLI, the two checks above (strict, lenient), and tab-aware
+indentation are the whole tool right now.
