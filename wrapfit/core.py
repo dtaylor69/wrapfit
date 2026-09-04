@@ -28,6 +28,19 @@ class Report:
         # In lenient mode a long word is a known, accepted outcome, not a failure.
         return self.lenient or not self.violations
 
+    def to_dict(self) -> dict:
+        return {
+            "ok": self.ok,
+            "width": self.width,
+            "lenient": self.lenient,
+            "tabsize": self.tabsize,
+            "violations": [
+                {"line": v.line, "word": v.word, "length": v.length, "excess": v.excess}
+                for v in self.violations
+            ],
+            "wrapped_line_count": self.wrapped_line_count,
+        }
+
 
 def _indent_width(line: str, tabsize: int) -> int:
     """Column width of a line's leading whitespace, with tabs expanded to tabsize."""

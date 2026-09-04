@@ -68,6 +68,15 @@ excess is relative to what's actually left on the line, not the raw
 width. `--tabsize` defaults to 8, matching `textwrap` and most
 terminals.
 
+Get the result as JSON for scripting, instead of the text report:
+
+    $ wrapfit notes.txt --width 50 --json
+    {"ok": false, "width": 50, "lenient": false, "tabsize": 8, "violations": [{"line": 2, "word": "https://example.com/reports/very-long-quarterly-summary-2026", "length": 60, "excess": 10}], "wrapped_line_count": null}
+
+`--json` prints exactly one line, always to stdout, and the exit
+code still reflects `ok` — no need to parse the text output to
+tell success from failure.
+
 ## Exit codes
 
 - `0` — text fits, or `--lenient` was given so any long words were
@@ -88,5 +97,5 @@ terminals.
 
 ## Status
 
-Early. The CLI, the two checks above (strict, lenient), and tab-aware
-indentation are the whole tool right now.
+Early. The CLI, the two checks above (strict, lenient), tab-aware
+indentation, and `--json` output are the whole tool right now.

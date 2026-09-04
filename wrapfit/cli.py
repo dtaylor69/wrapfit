@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from typing import List, Optional
 
@@ -26,6 +27,11 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=8,
         help="columns per tab stop, for lines indented with tabs (default: 8)",
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="print the result as a single JSON object instead of text, for scripting",
     )
     return parser
 
@@ -52,6 +58,10 @@ def main(argv: Optional[List[str]] = None) -> int:
     except ValueError as exc:
         print(f"wrapfit: {exc}", file=sys.stderr)
         return 2
+
+    if args.json:
+        print(json.dumps(report.to_dict()))
+        return 0 if report.ok else 1
 
     if not report.violations:
         print(f"fits: every word fits within {args.width} columns")

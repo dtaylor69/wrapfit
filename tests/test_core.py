@@ -74,5 +74,43 @@ class CheckTests(unittest.TestCase):
         self.assertEqual(report.violations[0].excess, 4)
 
 
+class ReportToDictTests(unittest.TestCase):
+    def test_dict_has_no_violations_and_null_line_count_when_fitting(self) -> None:
+        report = check("a short line", width=20)
+        self.assertEqual(
+            report.to_dict(),
+            {
+                "ok": True,
+                "width": 20,
+                "lenient": False,
+                "tabsize": 8,
+                "violations": [],
+                "wrapped_line_count": None,
+            },
+        )
+
+    def test_dict_serializes_each_violation_as_a_plain_object(self) -> None:
+        report = check("supercalifragilisticexpialidocious", width=10)
+        d = report.to_dict()
+        self.assertFalse(d["ok"])
+        self.assertEqual(
+            d["violations"],
+            [{"line": 1, "word": "supercalifragilisticexpialidocious", "length": 35, "excess": 25}],
+        )
+
+    def test_dict_reports_wrapped_line_count_in_lenient_mode(self) -> None:
+        report = check("supercalifragilisticexpialidocious", width=10, lenient=True)
+        d = report.to_dict()
+        self.assertTrue(d["ok"])
+        self.assertIsNotNone(d["wrapped_line_count"])
+
+    def test_dict_is_json_serializable(self) -> None:
+        import json
+
+        report = check("supercalifragilisticexpialidocious", width=10, lenient=True)
+        # Round-tripping through json.dumps/loads should not raise or change the shape.
+        self.assertEqual(json.loads(json.dumps(report.to_dict())), report.to_dict())
+
+
 if __name__ == "__main__":
     unittest.main()
