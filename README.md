@@ -68,6 +68,20 @@ excess is relative to what's actually left on the line, not the raw
 width. `--tabsize` defaults to 8, matching `textwrap` and most
 terminals.
 
+Check every file under a directory at once:
+
+    $ wrapfit docs/ --width 72
+    docs/api.md:14: too long — 'https://example.com/reports/very-long-quarterly-summary-2026' is 60 columns, 10 over width
+
+    1 word(s) exceed 72 columns across 1 file(s). Widen the column,
+    shorten the word, or pass --lenient to allow breaking it.
+
+Directory mode walks the tree recursively and checks every file it can
+decode as UTF-8 text, silently skipping anything it can't (binary
+files, files it doesn't have permission to read). `--json` in
+directory mode prints a single JSON array, one object per file, each
+with a `path` key alongside the usual fields.
+
 Get the result as JSON for scripting, instead of the text report:
 
     $ wrapfit notes.txt --width 50 --json
@@ -98,4 +112,5 @@ tell success from failure.
 ## Status
 
 Early. The CLI, the two checks above (strict, lenient), tab-aware
-indentation, and `--json` output are the whole tool right now.
+indentation, directory mode, and `--json` output are the whole tool
+right now.
