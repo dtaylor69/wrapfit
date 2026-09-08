@@ -32,7 +32,7 @@ Catch a word that won't fit:
     for details.
 
     $ wrapfit notes.txt --width 50
-    line 2: too long — 'https://example.com/reports/very-long-quarterly-summary-2026' is 60 columns, 10 over width
+    line 2, paragraph 1: too long — 'https://example.com/reports/very-long-quarterly-summary-2026' is 60 columns, 10 over width
 
     1 word(s) exceed 50 columns. Widen the column, shorten the word,
     or pass --lenient to allow breaking it.
@@ -43,7 +43,7 @@ Catch a word that won't fit:
 Allow it to break instead of failing:
 
     $ wrapfit notes.txt --width 50 --lenient
-    line 2: would be broken — 'https://example.com/reports/very-long-quarterly-summary-2026' is 60 columns, 10 over width
+    line 2, paragraph 1: would be broken — 'https://example.com/reports/very-long-quarterly-summary-2026' is 60 columns, 10 over width
     lenient wrap would produce 4 line(s)
 
     $ echo $?
@@ -57,7 +57,7 @@ bodies before they're written:
 Account for tab-indented input, such as a code comment:
 
     $ printf '\t\t\tsee-the-attached-configuration-file.yaml\n' | wrapfit --width 40 --tabsize 4
-    line 1: too long — 'see-the-attached-configuration-file.yaml' is 40 columns, 12 over width
+    line 1, paragraph 1: too long — 'see-the-attached-configuration-file.yaml' is 40 columns, 12 over width
 
     1 word(s) exceed 40 columns. Widen the column, shorten the word,
     or pass --lenient to allow breaking it.
@@ -71,7 +71,7 @@ terminals.
 Check every file under a directory at once:
 
     $ wrapfit docs/ --width 72
-    docs/api.md:14: too long — 'https://example.com/reports/very-long-quarterly-summary-2026' is 60 columns, 10 over width
+    docs/api.md:14, paragraph 3: too long — 'https://example.com/reports/very-long-quarterly-summary-2026' is 60 columns, 10 over width
 
     1 word(s) exceed 72 columns across 1 file(s). Widen the column,
     shorten the word, or pass --lenient to allow breaking it.
@@ -85,7 +85,7 @@ with a `path` key alongside the usual fields.
 Get the result as JSON for scripting, instead of the text report:
 
     $ wrapfit notes.txt --width 50 --json
-    {"ok": false, "width": 50, "lenient": false, "tabsize": 8, "violations": [{"line": 2, "word": "https://example.com/reports/very-long-quarterly-summary-2026", "length": 60, "excess": 10}], "wrapped_line_count": null}
+    {"ok": false, "width": 50, "lenient": false, "tabsize": 8, "violations": [{"line": 2, "paragraph": 1, "word": "https://example.com/reports/very-long-quarterly-summary-2026", "length": 60, "excess": 10}], "wrapped_line_count": null}
 
 `--json` prints exactly one line, always to stdout, and the exit
 code still reflects `ok` — no need to parse the text output to
@@ -107,6 +107,12 @@ tell success from failure.
 - A line's leading tabs count against its width budget once expanded,
   so an indented word is checked against the columns actually left on
   the line, not the full target width.
+- Every violation is tagged with a paragraph number — a 1-based count
+  of blank-line-separated blocks — alongside its line number. For
+  prose that's already been through one round of wrapping, the line
+  number shifts every time the width changes; the paragraph number
+  doesn't, so it's the more stable way to point someone at the right
+  spot.
 - No third-party dependencies — standard library only.
 
 ## Status

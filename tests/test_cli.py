@@ -53,6 +53,25 @@ class JsonOutputTests(unittest.TestCase):
         self.assertEqual(out.count("\n"), 1)
 
 
+class ParagraphReportingTests(unittest.TestCase):
+    def test_text_output_reports_paragraph_number_for_prose(self) -> None:
+        text = (
+            "first paragraph, all fine.\n"
+            "\n"
+            "second paragraph has a supercalifragilisticexpialidocious word.\n"
+        )
+        code, out = run(["-w", "20"], stdin_text=text)
+        self.assertEqual(code, 1)
+        self.assertIn("line 3, paragraph 2:", out)
+
+    def test_json_output_includes_paragraph_per_violation(self) -> None:
+        text = "fine\n\nsupercalifragilisticexpialidocious\n"
+        code, out = run(["-w", "10", "--json"], stdin_text=text)
+        self.assertEqual(code, 1)
+        payload = json.loads(out)
+        self.assertEqual(payload["violations"][0]["paragraph"], 2)
+
+
 class DirectoryModeTests(unittest.TestCase):
     def test_fitting_directory_exits_zero(self) -> None:
         with tempfile.TemporaryDirectory() as root:
@@ -68,7 +87,7 @@ class DirectoryModeTests(unittest.TestCase):
             bad = write(root, "bad.txt", "supercalifragilisticexpialidocious\n")
             code, out = run([root, "-w", "10"])
             self.assertEqual(code, 1)
-            self.assertIn(f"{bad}:1:", out)
+            self.assertIn(f"{bad}:1, paragraph 1:", out)
             self.assertNotIn(good, out)
 
     def test_json_output_is_a_list_with_path_per_entry(self) -> None:

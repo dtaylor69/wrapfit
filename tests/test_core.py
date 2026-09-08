@@ -17,6 +17,27 @@ class FindViolationsTests(unittest.TestCase):
         self.assertEqual(v.length, 60)
         self.assertEqual(v.excess, 10)
 
+    def test_all_lines_in_one_block_share_a_paragraph_number(self) -> None:
+        text = "fine\nalsofine\nway-too-long-a-single-token-for-this-width"
+        violations = find_violations(text, width=10)
+        self.assertEqual([v.paragraph for v in violations], [1])
+
+    def test_blank_line_starts_a_new_paragraph(self) -> None:
+        text = "short line\n\nway-too-long-a-single-token-for-this-width\n\nshort again"
+        violations = find_violations(text, width=10)
+        self.assertEqual([v.line for v in violations], [3])
+        self.assertEqual([v.paragraph for v in violations], [2])
+
+    def test_multiple_blank_lines_only_count_as_one_paragraph_break(self) -> None:
+        text = "first\n\n\n\nway-too-long-a-single-token-for-this-width"
+        violations = find_violations(text, width=10)
+        self.assertEqual([v.paragraph for v in violations], [2])
+
+    def test_leading_blank_lines_do_not_create_an_empty_paragraph(self) -> None:
+        text = "\n\nway-too-long-a-single-token-for-this-width"
+        violations = find_violations(text, width=10)
+        self.assertEqual([v.paragraph for v in violations], [1])
+
     def test_line_numbers_are_one_indexed_and_per_line(self) -> None:
         text = "fine\nalsofine\nway-too-long-a-single-token-for-this-width"
         violations = find_violations(text, width=10)
@@ -95,7 +116,15 @@ class ReportToDictTests(unittest.TestCase):
         self.assertFalse(d["ok"])
         self.assertEqual(
             d["violations"],
-            [{"line": 1, "word": "supercalifragilisticexpialidocious", "length": 35, "excess": 25}],
+            [
+                {
+                    "line": 1,
+                    "paragraph": 1,
+                    "word": "supercalifragilisticexpialidocious",
+                    "length": 35,
+                    "excess": 25,
+                }
+            ],
         )
 
     def test_dict_reports_wrapped_line_count_in_lenient_mode(self) -> None:

@@ -82,7 +82,10 @@ def run_directory(args: argparse.Namespace) -> int:
         files_with_violations += 1
         label = "would be broken" if args.lenient else "too long"
         for v in report.violations:
-            print(f"{path}:{v.line}: {label} — '{v.word}' is {v.length} columns, {v.excess} over width")
+            print(
+                f"{path}:{v.line}, paragraph {v.paragraph}: {label} — "
+                f"'{v.word}' is {v.length} columns, {v.excess} over width"
+            )
         if report.lenient and report.wrapped_line_count is not None:
             print(f"{path}: lenient wrap would produce {report.wrapped_line_count} line(s)")
 
@@ -131,7 +134,10 @@ def main(argv: Optional[List[str]] = None) -> int:
     else:
         label = "would be broken" if args.lenient else "too long"
         for v in report.violations:
-            print(f"line {v.line}: {label} — '{v.word}' is {v.length} columns, {v.excess} over width")
+            print(
+                f"line {v.line}, paragraph {v.paragraph}: {label} — "
+                f"'{v.word}' is {v.length} columns, {v.excess} over width"
+            )
         if not args.lenient:
             print(
                 f"\n{len(report.violations)} word(s) exceed {args.width} columns. "
