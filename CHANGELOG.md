@@ -23,5 +23,7 @@ to PyPI yet.
   per-file reports in directory mode).
 - Per-paragraph reporting alongside line numbers, so a violation stays
   easy to locate even after the text is rewrapped and line numbers shift.
+- `--exclude` (repeatable glob) to skip files and directories in
+  directory mode.
 - Packaging metadata and a `py.typed` marker, in preparation for a
   PyPI release.

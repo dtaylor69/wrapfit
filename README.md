@@ -82,6 +82,16 @@ files, files it doesn't have permission to read). `--json` in
 directory mode prints a single JSON array, one object per file, each
 with a `path` key alongside the usual fields.
 
+Skip paths you don't want checked with `--exclude`, which takes a glob
+and can be repeated:
+
+    $ wrapfit . --width 72 --exclude .git --exclude '*.lock' --exclude docs/generated
+
+A pattern is matched against both a file's name and its path relative
+to the directory you passed, using `fnmatch` rules. A directory that
+matches is skipped entirely. `--exclude` has no effect on a single file
+or stdin.
+
 Get the result as JSON for scripting, instead of the text report:
 
     $ wrapfit notes.txt --width 50 --json

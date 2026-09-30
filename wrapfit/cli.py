@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import argparse
+import fnmatch
 import json
 import os
 import sys
-from typing import List, Optional, Tuple
+from typing import List, Optional, Sequence, Tuple
 
 from .core import Report, check
 
@@ -34,6 +35,14 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="print the result as a single JSON object instead of text, for scripting",
     )
+    parser.add_argument(
+        "--exclude",
+        action="append",
+        default=[],
+        metavar="PATTERN",
+        help="in directory mode, skip files and directories matching this glob, by name or "
+        "relative path (repeatable)",
+    )
     return parser
 
 
@@ -44,19 +53,34 @@ def read_input(path: Optional[str]) -> str:
         return f.read()
 
 
-def iter_files(root: str) -> List[str]:
-    """All regular files under root, in a stable, walkable order."""
+def is_excluded(root: str, path: str, patterns: Sequence[str]) -> bool:
+    """True if path matches any pattern by its base name or its path relative to root."""
+    rel = os.path.relpath(path, root).replace(os.sep, "/")
+    name = os.path.basename(path)
+    return any(fnmatch.fnmatch(name, p) or fnmatch.fnmatch(rel, p) for p in patterns)
+
+
+def iter_files(root: str, exclude: Sequence[str] = ()) -> List[str]:
+    """All regular files under root, in a stable, walkable order.
+
+    Excluded directories are pruned rather than filtered file by file, so
+    something like .git is never descended into.
+    """
     paths = []
     for dirpath, dirnames, filenames in os.walk(root):
-        dirnames.sort()
+        dirnames[:] = sorted(d for d in dirnames if not is_excluded(root, os.path.join(dirpath, d), exclude))
         for name in sorted(filenames):
-            paths.append(os.path.join(dirpath, name))
+            path = os.path.join(dirpath, name)
+            if not is_excluded(root, path, exclude):
+                paths.append(path)
     return paths
 
 
-def check_directory(root: str, width: int, *, lenient: bool, tabsize: int) -> List[Tuple[str, Report]]:
+def check_directory(
+    root: str, width: int, *, lenient: bool, tabsize: int, exclude: Sequence[str] = ()
+) -> List[Tuple[str, Report]]:
     results = []
-    for path in iter_files(root):
+    for path in iter_files(root, exclude):
         try:
             with open(path, encoding="utf-8") as f:
                 text = f.read()
@@ -68,7 +92,9 @@ def check_directory(root: str, width: int, *, lenient: bool, tabsize: int) -> Li
 
 
 def run_directory(args: argparse.Namespace) -> int:
-    results = check_directory(args.file, args.width, lenient=args.lenient, tabsize=args.tabsize)
+    results = check_directory(
+        args.file, args.width, lenient=args.lenient, tabsize=args.tabsize, exclude=args.exclude
+    )
     ok = all(report.ok for _, report in results)
 
     if args.json:

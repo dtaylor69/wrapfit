@@ -106,6 +106,29 @@ class DirectoryModeTests(unittest.TestCase):
             code, _ = run([root, "-w", "10", "--lenient"])
             self.assertEqual(code, 0)
 
+    def test_exclude_skips_files_matching_name(self) -> None:
+        with tempfile.TemporaryDirectory() as root:
+            write(root, "good.txt", "fine\n")
+            write(root, "sub/bad.log", "supercalifragilisticexpialidocious\n")
+            code, out = run([root, "-w", "10", "--exclude", "*.log"])
+            self.assertEqual(code, 0)
+            self.assertIn("1 file(s)", out)
+
+    def test_exclude_prunes_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as root:
+            write(root, "good.txt", "fine\n")
+            write(root, "vendor/bad.txt", "supercalifragilisticexpialidocious\n")
+            code, _ = run([root, "-w", "10", "--exclude", "vendor"])
+            self.assertEqual(code, 0)
+
+    def test_exclude_matches_relative_path_and_is_repeatable(self) -> None:
+        with tempfile.TemporaryDirectory() as root:
+            write(root, "docs/bad.txt", "supercalifragilisticexpialidocious\n")
+            write(root, "other.txt", "supercalifragilisticexpialidocious\n")
+            code, out = run([root, "-w", "10", "--exclude", "docs/bad.txt", "--exclude", "other.txt"])
+            self.assertEqual(code, 0)
+            self.assertIn("0 file(s)", out)
+
     def test_binary_file_is_skipped_without_error(self) -> None:
         with tempfile.TemporaryDirectory() as root:
             write(root, "fine.txt", "fine\n")
